@@ -148,7 +148,7 @@ QNetworkAccessManager принимает и отправляет запросы.
 ### Пользователю запрещен доступ к отчетам, лог из контейнера с backend api:
 ![Нет прав, лог](https://github.com/Boropwnz/architecture-bionicpro/blob/sprint_8/05_login_user-2.png)
 
-### Токен не валиден, неправильный секрет (или любая другая ошибка проверки токена, user: user1, role: user):
+### Токен не валиден, неправильный секрет (любая ошибка проверки токена, user: user1, role: user):
 ![Токен](https://github.com/Boropwnz/architecture-bionicpro/blob/sprint_8/05_login_user-1-inv.png)
 
 ### Токен не валиден, лог из контейнера с backend api:
