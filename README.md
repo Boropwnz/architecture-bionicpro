@@ -79,7 +79,7 @@ QNetworkAccessManager принимает и отправляет запросы.
   postData.append("&client_secret=" + m_clientSecret.toUtf8());
   QNetworkReply *reply = m_networkManager->post(request, postData);
   ```
-- Ответ на GET /reports в виде специального заголовка Reports для простоты
+- Ответ на GET /reports в виде специального заголовка Reports вместо отчетов для простоты
   ```
   QHttpServerResponse response(message, code);
   response.setHeaders(headers);
