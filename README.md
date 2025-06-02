@@ -24,13 +24,70 @@ ReactKeycloakProvider authClient={keycloak} initOptions={{pkceMethod: 'S256'}}
 QNetworkAccessManager принимает и отправляет запросы.
 
 Входящие запросы будут такие:
-- Keycloak будет делать CORS чек
-- Фронтенд будет делать GET на эндпоинт /reports
+- Фронтенд будет делать GET на эндпоинт /reports, а мы слушать
+  ```
+  m_server.route("/reports", QHttpServerRequest::Method::AnyKnown, [this](const QHttpServerRequest &request) {
+    return handleRequest(request);
+  });
+  if (!m_server.listen(QHostAddress::Any, 8000)) {
+    qCritical() << "Failed to start server on port 8000";
+  }
+  ```
+- Keycloak будет делать CORS чек, для простоты проверки CORS атрибутов пропущены
+  ```
+  // CORS check
+  if (request.method() != QHttpServerRequest::Method::Get) {
+      qInfo() << "Not get method";
+      QHttpServerResponse response("CORS check reply", QHttpServerResponder::StatusCode::Ok);
+      // Headers can be taken from request with request.headers() for complexity;
+      response.setHeaders(headers);
+      return response;
+  }
+  ```
 
 Исходящие запросы будут такие:
-- Ответ на CORS чек с правильными заголовками
+- Ответ на CORS чек с правильными заголовками, для простоты они константные
+  ```
+  QHttpServerResponder::HeaderList headers = {
+      {"Access-Control-Allow-Origin", "http://localhost:3000"},
+      {"Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"},
+      {"Access-Control-Allow-Headers", "Content-Type, Authorization"},
+      {"Access-Control-Allow-Credentials", "true"}
+  };
+
+  // CORS check
+  if (request.method() != QHttpServerRequest::Method::Get) {
+      qInfo() << "Not get method";
+      QHttpServerResponse response("CORS check reply", QHttpServerResponder::StatusCode::Ok);
+      // Headers can be taken from request with request.headers() for complexity;
+      response.setHeaders(headers);
+      return response;
+  }
+  ```
 - Запрос в Keycloak на валидацию токена через token/introspect с правильными заголовками и Bearer токеном
+  ```
+  QNetworkRequest request;
+  QString introspectionUrl = QString("%1/realms/%2/protocol/openid-connect/token/introspect").arg(m_keycloakUrl, m_realm);
+  request.setUrl(QUrl(introspectionUrl));
+  request.setRawHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+  QString authHeader = QString("%1:%2").arg(m_clientId, m_clientSecret);
+  request.setRawHeader("Authorization", "Basic " + authHeader.toUtf8().toBase64());
+  QByteArray postData;
+  postData.append("token=" + token.toUtf8());
+  postData.append("&client_id=" + m_clientId.toUtf8());
+  postData.append("&client_secret=" + m_clientSecret.toUtf8());
+  QNetworkReply *reply = m_networkManager->post(request, postData);
+  ```
 - Ответ на GET /reports в виде специального заголовка Reports для простоты
+  ```
+  QHttpServerResponse response(message, code);
+  response.setHeaders(headers);
+  if (sendData) {
+      response.addHeader("Reports", "Reports data");
+  }
+  return response;
+  ```
 
 На локальной машине все работает, но есть некоторые сложности с отладкой взаимодействия сервисов в docker desktop.
 
