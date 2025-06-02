@@ -11,6 +11,8 @@ services:
       - ./postgres-keycloak-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    networks:
+      - mynetwork
   keycloak:
     image: quay.io/keycloak/keycloak:21.1
     environment:
@@ -27,8 +29,15 @@ services:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     ports:
       - "8080:8080"
+    expose:
+      - "8000:8080"
     depends_on:
       - keycloak_db
+    networks:
+      mynetwork:
+        aliases:
+          - keycloak
+
   frontend:
     build:
       context: ./frontend
@@ -40,3 +49,29 @@ services:
       REACT_APP_KEYCLOAK_URL: http://localhost:8080
       REACT_APP_KEYCLOAK_REALM: reports-realm
       REACT_APP_KEYCLOAK_CLIENT_ID: reports-frontend
+    depends_on:
+      - api
+    networks:
+      - mynetwork
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - KEYCLOAK_URL=http://localhost:8080
+      - REALM=reports-realm
+      - BACKEND_API_CLIENT_ID=reports-api
+      # - CORS_ALLOWED_ORIGINS=http://localhost:3000
+      # - CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE
+      # - CORS_ALLOWED_HEADERS=Content-Type,Authorization
+    depends_on:
+      - keycloak
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
