@@ -116,7 +116,7 @@ QNetworkAccessManager принимает и отправляет запросы.
 
 Если роль "prothetic_user", возвращаем код `Ok`. Добавим в ответ заголовок "Reports" имитирующий возвращение отчета.
 
-Настройка keycloak производилась в панели администратора, здесь экспор настроек реалма: [realm-export-used-for-screenshots.json](https://github.com/Boropwnz/architecture-bionicpro/blob/sprint_8/keycloak/realm-export-used-for-screenshots.json)
+Настройка keycloak производилась в панели администратора, здесь экспорт настроек реалма: [realm-export-used-for-screenshots.json](https://github.com/Boropwnz/architecture-bionicpro/blob/sprint_8/keycloak/realm-export-used-for-screenshots.json)
 
 ## 3. Проверка работы.
 
