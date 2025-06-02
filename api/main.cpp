@@ -32,10 +32,12 @@ private:
     QHttpServer m_server;
     QNetworkAccessManager *m_networkManager;
 
-    const QString m_keycloakUrl = "http://localhost:8080";
+    // const QString m_keycloakUrl = "http://host.docker.internal:8080";
+    const QString m_keycloakUrl = "http://keycloak:8080";
     const QString m_realm = "reports-realm";
     const QString m_clientId = "reports-api";
-    const QString m_clientSecret = "oNwoLQdvJAvRcL89SydqCWCe5ry1jMgq";
+    // const QString m_clientSecret = "oNwoLQdvJAvRcL89SydqCWCe5ry1jMgq";
+    const QString m_clientSecret = "mK165W6o37Hf9U05IwkhmiVfjrJb4BG6";
 
     QHttpServerResponse handleRequest(const QHttpServerRequest &request) {
         qInfo() << "Got request";
@@ -58,6 +60,7 @@ private:
         else {
             qInfo() << "Get method";
             const QString token = getBearerToken(request);
+            qInfo() << "Token " << token;
             QString message;
             bool sendData(false);
             QHttpServerResponder::StatusCode code;
@@ -108,12 +111,12 @@ private:
         qInfo() << "Verify token";
         QEventLoop loop;
         QNetworkRequest request;
-        QString internalKeycloakUrl = "http://keycloak:8080";
-        QString introspectionUrl = QString("%1/realms/%2/protocol/openid-connect/token/introspect").arg(internalKeycloakUrl, m_realm);
-        //QString introspectionUrl = QString("%1/realms/%2/protocol/openid-connect/token/introspect").arg(m_keycloakUrl, m_realm);
+        QString introspectionUrl = QString("%1/realms/%2/protocol/openid-connect/token/introspect").arg(m_keycloakUrl, m_realm);
         request.setUrl(QUrl(introspectionUrl));
-        // request.setRawHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+        request.setRawHeader("Access-Control-Allow-Origin", "http://localhost:3000");
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        QString authHeader = QString("%1:%2").arg(m_clientId, m_clientSecret);
+        request.setRawHeader("Authorization", "Basic " + authHeader.toUtf8().toBase64());
         QByteArray postData;
         postData.append("token=" + token.toUtf8());
         postData.append("&client_id=" + m_clientId.toUtf8());
@@ -122,11 +125,14 @@ private:
         QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
         loop.exec();
         if (reply->error() != QNetworkReply::NoError) {
-            qWarning() << "Keycloak error:" << reply->errorString();
+            qInfo() << "Keycloak error:" << reply->errorString();
             return {false, {}};
         }
         const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         const QJsonObject response = doc.object();
+        for(auto json_it = response.begin(); json_it != response.end(); ++json_it) {
+            qInfo() << json_it.key() << " : " << json_it.value();
+        }
         const bool isActive = response["active"].toBool();
         QStringList roles;
         if (isActive) {

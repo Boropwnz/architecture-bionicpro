@@ -117,6 +117,7 @@
         "redirectUris": ["http://localhost:3000/*"],
         "webOrigins": ["http://localhost:3000"],
         "directAccessGrantsEnabled": true,
+		"protocol": "openid-connect",
 		"attributes": {
 			"pkce.code.challenge.method": "S256"
 		}
