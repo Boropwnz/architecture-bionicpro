@@ -21,7 +21,11 @@ const ReportPage: React.FC = () => {
           'Authorization': `Bearer ${keycloak.token}`
         }
       });
-
+      if (response.ok) {
+        const reports = response.headers.get("Reports");
+        setError(reports); // Lets show reports message from API in error for simplicity
+        console.log('Reports:', reports);
+      }
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
